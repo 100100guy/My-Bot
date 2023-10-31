@@ -1,7 +1,7 @@
 import { config } from 'dotenv';
 import fetch from 'node-fetch';
 import gis from 'g-i-s';
-import Discord, { Client, Events, GatewayIntentBits, EmbedBuilder  } from 'discord.js';
+import Discord, { Client, Events, GatewayIntentBits, EmbedBuilder } from 'discord.js';
 
 // Load environment variables from a .env file
 config();
@@ -14,11 +14,34 @@ if (config.error) {
 const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
 const NEWS_API_KEY = process.env.NEWS_API_KEY;
 const WEATHER_API_KEY = process.env.WEATHER_API_KEY;
+const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
 
 const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent,
   GatewayIntentBits.GuildMembers,]
 });
+/**
+ * @param {Discord.Message} message
+ */
+async function getSong(message) {
+  try {
+    const response = await fetch(`https://youtube.googleapis.com/youtube/v3/search?part=id&part=snippet&q=zubeengarghindisong&safeSearch=strict&key=${YOUTUBE_API_KEY}`);
+    const data = await response.json();
+
+    if (data.items && data.items.length > 0) {
+      const randomIndex = Math.floor(Math.random() * data.items.length);
+      const randomVideoId = data.items[randomIndex].id.videoId;
+      const youtubeLink = `https://www.youtube.com/watch?v=${randomVideoId}`;
+
+      message.channel.send(youtubeLink);
+    } else {
+      message.channel.send('No videos found.');
+    }
+  } catch (error) {
+    console.error('Error fetching videos:', error);
+    message.channel.send('Failed to fetch videos.');
+  }
+}
 
 /**
  * @param {Discord.Message} message
@@ -31,7 +54,7 @@ async function getWeather(message) {
 
     if (data.cod === 200) {
       const temperature = data.main.temp;
-      const description = data.weather[0].description;
+      const description = data.weather[0].description.replace(/\b\w/g, (match) => match.toUpperCase());
       const humidity = data.main.humidity;
 
       // Get the emoji for the weather description
@@ -42,7 +65,7 @@ async function getWeather(message) {
         .setTitle(`Weather in Assam`)
         .addFields(
           { name: 'Temperature', value: `${temperature}°C`, inline: true },
-          { name: 'Description', value: description , inline: true },
+          { name: 'Description', value: description, inline: true },
           { name: 'Humidity', value: `${humidity}%`, inline: true },
         )
         .setThumbnail(weatherIcon); // Set the weather icon as a thumbnail
@@ -113,6 +136,9 @@ client.on("messageCreate", (message) => {
     }
     else if (tokens[0].toLowerCase() === "./weather") {
       getWeather(message)
+    }
+    else if (tokens[0].toLowerCase() === "./songs") {
+      getSong(message)
     }
   }
 });
