@@ -6,6 +6,10 @@ import Discord, {
   Events,
   GatewayIntentBits,
   EmbedBuilder,
+  StringSelectMenuBuilder,
+  StringSelectMenuOptionBuilder,
+  ActionRowBuilder,
+  ComponentType,
 } from "discord.js";
 import { translate } from "@vitalets/google-translate-api";
 
@@ -41,24 +45,67 @@ async function handleTranslationCommand(message) {
   }
 
   try {
-    const translatedText = await translateText(textToTranslate);
-    const translatedMessage = new EmbedBuilder()
+    const langs = [
+      {
+        label: "Bangla",
+        description: "বাংলা",
+        value: "bn",
+      },
+      {
+        label: "Assamese",
+        description: "অসমীয়া",
+        value: "as",
+      },
+    ];
+    const selectMenu = new StringSelectMenuBuilder()
+      .setCustomId(message.id)
+      .setPlaceholder("Select a language")
+      .setMinValues(1)
+      .setMaxValues(1)
+      .addOptions(
+        langs.map((lang) =>
+          new StringSelectMenuOptionBuilder()
+            .setLabel(lang.label)
+            .setDescription(lang.description)
+            .setValue(lang.value)
+        )
+      );
+    const actionRow = new ActionRowBuilder().addComponents(selectMenu);
+    const choice= await message.reply({
+      components : [actionRow],
+    })
+
+    const collector = choice.createMessageComponentCollector({
+      componentType: ComponentType.StringSelect,
+      filter : (interaction) => interaction.user.id === message.author.id && interaction.customId === message.id,
+      time: 10_000,
+      max: 1, // Allow a maximum of 1 interaction
+    });
+
+    collector.on("collect", async (interaction) => {
+      const selectedlang=interaction.values[0];
+      await interaction.deferUpdate();
+      const translatedText = await translateText(textToTranslate, selectedlang) + (selectedlang === 'as' ? ' 😍' : '');
+      const translatedMessage = new EmbedBuilder()
       .setTitle(`Translated text`)
       .addFields(
         { name: "Original text", value: textToTranslate, inline: false },
         { name: "Translated Text", value: translatedText, inline: false }
       );
     message.channel.send({ embeds: [translatedMessage] });
+    });
+      
+    
   } catch (error) {
     console.error("Error:", error);
     message.channel.send("An error occurred while translating the text.");
   }
 }
 
-async function translateText(txt) {
+async function translateText(txt,lang) {
   try {
     console.log(txt);
-    const { text } = await translate(txt+' 😍', { to: "as" });
+    const { text } = await translate(txt , { to: lang });
     console.log("Translated text bop:", text);
     return text;
   } catch (error) {
@@ -120,7 +167,7 @@ async function getWeather(message) {
           { name: "Description", value: description, inline: true },
           { name: "Humidity", value: `${humidity}%`, inline: true }
         )
-        .setThumbnail(weatherIcon); 
+        .setThumbnail(weatherIcon);
       message.channel.send({ embeds: [weatherMessage] });
     } else {
       message.channel.send("Unable to fetch weather data for Assam.");
