@@ -111,10 +111,8 @@ async function getWeather(message) {
       );
       const humidity = data.main.humidity;
 
-      // Get the emoji for the weather description
       const weatherIcon = `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`;
 
-      // Create a plain text message
       const weatherMessage = new EmbedBuilder()
         .setTitle(`Weather in Assam`)
         .addFields(
@@ -122,7 +120,7 @@ async function getWeather(message) {
           { name: "Description", value: description, inline: true },
           { name: "Humidity", value: `${humidity}%`, inline: true }
         )
-        .setThumbnail(weatherIcon); // Set the weather icon as a thumbnail
+        .setThumbnail(weatherIcon); 
       message.channel.send({ embeds: [weatherMessage] });
     } else {
       message.channel.send("Unable to fetch weather data for Assam.");
@@ -138,18 +136,14 @@ async function getWeather(message) {
  */
 async function GetNews(message) {
   try {
-    // Fetch news from London using NewsAPI
     const response = await fetch(
       `https://newsapi.org/v2/everything?q=Assam&apiKey=${NEWS_API_KEY}`
     );
     const newsData = await response.json();
 
     if (newsData.articles && newsData.articles.length > 0) {
-      // Select a random news article
       const randomIndex = Math.floor(Math.random() * newsData.articles.length);
       const randomArticle = newsData.articles[randomIndex];
-
-      // Send the random news article as a message
       message.channel.send(`${randomArticle.title}\n${randomArticle.url}`);
     } else {
       message.channel.send("No news articles found for Assam.");
