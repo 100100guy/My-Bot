@@ -71,41 +71,43 @@ async function handleTranslationCommand(message) {
         )
       );
     const actionRow = new ActionRowBuilder().addComponents(selectMenu);
-    const choice= await message.reply({
-      components : [actionRow],
-    })
+    const choice = await message.reply({
+      components: [actionRow],
+    });
 
     const collector = choice.createMessageComponentCollector({
       componentType: ComponentType.StringSelect,
-      filter : (interaction) => interaction.user.id === message.author.id && interaction.customId === message.id,
+      filter: (interaction) =>
+        interaction.user.id === message.author.id &&
+        interaction.customId === message.id,
       time: 10_000,
       max: 1, // Allow a maximum of 1 interaction
     });
 
     collector.on("collect", async (interaction) => {
-      const selectedlang=interaction.values[0];
+      const selectedlang = interaction.values[0];
       await interaction.deferUpdate();
-      const translatedText = await translateText(textToTranslate, selectedlang) + (selectedlang === 'as' ? ' 😍' : '');
+      const translatedText =
+        (await translateText(textToTranslate, selectedlang)) +
+        (selectedlang === "as" ? " 😍" : "");
       const translatedMessage = new EmbedBuilder()
-      .setTitle(`Translated text`)
-      .addFields(
-        { name: "Original text", value: textToTranslate, inline: false },
-        { name: "Translated Text", value: translatedText, inline: false }
-      );
-    message.channel.send({ embeds: [translatedMessage] });
+        .setTitle(`Translated text`)
+        .addFields(
+          { name: "Original text", value: textToTranslate, inline: false },
+          { name: "Translated Text", value: translatedText, inline: false }
+        );
+      message.channel.send({ embeds: [translatedMessage] });
     });
-      
-    
   } catch (error) {
     console.error("Error:", error);
     message.channel.send("An error occurred while translating the text.");
   }
 }
 
-async function translateText(txt,lang) {
+async function translateText(txt, lang) {
   try {
     console.log(txt);
-    const { text } = await translate(txt , { to: lang });
+    const { text } = await translate(txt, { to: lang });
     console.log("Translated text bop:", text);
     return text;
   } catch (error) {
