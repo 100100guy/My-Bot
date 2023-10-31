@@ -58,7 +58,7 @@ async function handleTranslationCommand(message) {
 async function translateText(txt) {
   try {
     console.log(txt);
-    const { text } = await translate(txt, { to: "as" });
+    const { text } = await translate(txt+' 😍', { to: "as" });
     console.log("Translated text bop:", text);
     return text;
   } catch (error) {
